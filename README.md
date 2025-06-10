@@ -1,3 +1,5 @@
+![image](https://github.com/user-attachments/assets/d22ea525-0883-4aef-82f8-4a6c07fd05ff)
+
 # Malaphar
 A toolkit for scientific data visualization. Intended to be a collection of methods and tools particularly in connection with the Astaroth code, see www.gputurbulence.fi/astaroth/ . 
 
