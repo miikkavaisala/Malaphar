@@ -53,31 +53,42 @@ def keplerian_rotation(
     max_omega: float
 ) -> np.ndarray:
     """
-    Compute Kepleria velocity profile centered at a given location.
-    Velocity is capped at max_density within the inner radius.
+    Compute a 3D Keplerian rotation velocity field in the XY-plane,
+    centered at a given location. Angular velocity follows omega ∝ r^(-3/2),
+    capped at max_omega for small radii.
 
     Parameters:
-        data: DataContainer with xx, yy, zz attributes.
-        location: Center of the profile (x, y, z).
-        inner_r: Radius below which velocity is zero.
-        max_omega: Maximum angular velocity.
+        data: DataContainer with xx, yy, zz meshgrid attributes.
+        location: Tuple (x, y, z) specifying the rotation center.
+        inner_r: Radius below which solid-body rotation is assumed.
+        max_omega: Angular velocity at inner radius (used as cap).
 
     Returns:
-        3D NumPy array of velocity values with 3 velocity channels.
+        A 4D NumPy array of shape (nx, ny, nz, 3), where the last dimension
+        represents the velocity vector components (vx, vy, vz).
     """
 
     # Compute radius from the center
     dx = data.xx - location[0]
     dy = data.yy - location[1]
-    dz = data.zz - location[2]
     radius_xy = np.sqrt(dx**2 + dy**2)
 
-    omega     = max_omega * radius_xy**(3/2)
-    v_azimuth = radius_xy * omega
-    v_x       = #TODO
-    v_y       = #TODO
+    with np.errstate(divide='ignore', invalid='ignore'):
+        omega   = max_omega * radius_xy**(-3/2)
+        omega[radius_xy <= inner_r] = max_omega
 
-     
+    v_azimuth = radius_xy * omega
+    phi       = np.atan2(dy, dx) 
+
+    v_x       = -v_azimuth*np.sin(phi)
+    v_y       =  v_azimuth*np.cos(phi)
+
+    velocity = np.zeros((*data.resolution, 3), dtype=np.float64)
+    velocity[:,:,:,0] = v_x
+    velocity[:,:,:,1] = v_y
+    #velocity[:,:,:,2] is zero (no z-component)
+
+    return velocity
 
 
 def r2_density(
@@ -163,7 +174,8 @@ def main() -> None:
 
     print("Initializing density...")
     demo_data.set_field("density", r2_density(demo_data, (0.5, 0.5, 0.5), 0.01, 1.0))
-    #TODO: Add Keplerian velocity profile rotation curve and free fall velocity profile. 
+    #TODO: Include also free fall speed componet. 
+    demo_data.set_field("velocity3", keplerian_rotation(demo_data, (0.5, 0.5, 0,5), 0.01, 1.0))
 
     make_contourmap(demo_data, 20)
 
