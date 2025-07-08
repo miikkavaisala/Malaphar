@@ -46,6 +46,40 @@ class DataContainer:
         """
         self.fields[field_name] = field_array
 
+def keplerian_rotation(
+    data: DataContainer,
+    location: tuple[float, float, float],
+    inner_r: float,
+    max_omega: float
+) -> np.ndarray:
+    """
+    Compute Kepleria velocity profile centered at a given location.
+    Velocity is capped at max_density within the inner radius.
+
+    Parameters:
+        data: DataContainer with xx, yy, zz attributes.
+        location: Center of the profile (x, y, z).
+        inner_r: Radius below which velocity is zero.
+        max_omega: Maximum angular velocity.
+
+    Returns:
+        3D NumPy array of velocity values with 3 velocity channels.
+    """
+
+    # Compute radius from the center
+    dx = data.xx - location[0]
+    dy = data.yy - location[1]
+    dz = data.zz - location[2]
+    radius_xy = np.sqrt(dx**2 + dy**2)
+
+    omega     = max_omega * radius_xy**(3/2)
+    v_azimuth = radius_xy * omega
+    v_x       = #TODO
+    v_y       = #TODO
+
+     
+
+
 def r2_density(
     data: DataContainer,
     location: tuple[float, float, float],
@@ -129,6 +163,7 @@ def main() -> None:
 
     print("Initializing density...")
     demo_data.set_field("density", r2_density(demo_data, (0.5, 0.5, 0.5), 0.01, 1.0))
+    #TODO: Add Keplerian velocity profile rotation curve and free fall velocity profile. 
 
     make_contourmap(demo_data, 20)
 
