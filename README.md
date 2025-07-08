@@ -8,4 +8,4 @@ with, but not limited to, the Astaroth code, see www.gputurbulence.fi/astaroth/
 . This is still a work in progress. Please check out the Astaroth repository
 for more context. 
 
-So far anything here is set of demos and tools of data-analysis and visulization.   
+So far anything here is set of demos and tools of data-analysis and visualization.   
