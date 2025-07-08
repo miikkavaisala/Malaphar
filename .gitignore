@@ -1,0 +1,4 @@
+# Ignore PNG and SVG files (e.g., generated plots)
+**/*.png
+**/*.svg
+
