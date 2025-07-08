@@ -74,7 +74,7 @@ def keplerian_rotation(
     radius_xy = np.sqrt(dx**2 + dy**2)
 
     with np.errstate(divide='ignore', invalid='ignore'):
-        omega   = max_omega * radius_xy**(-3/2)
+        omega   = max_omega * (inner_r/radius_xy)**(3/2)
         omega[radius_xy <= inner_r] = max_omega
 
     v_azimuth = radius_xy * omega
