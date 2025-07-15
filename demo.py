@@ -126,24 +126,68 @@ def r2_density(
 
     return density
 
-def make_contourmap(data: DataContainer, levels: int = 20) -> None:
-    """Generate and save a contour map of the density field."""
-    # Extract dimensions for aspect ratio
-    Lx = data.dimensions[0]
-    Ly = data.dimensions[1]
-    aspect_ratio = Ly / Lx
+def make_contourmap(data: DataContainer, levels: int = 20, quiver_step: int = 10) -> None:
+    """Generate and save a contour map of the density field with velocity vectors.
 
-    # Set figure size (width=6 is arbitrary; height scales with aspect ratio)
+    Parameters
+    ----------
+    data : DataContainer
+        Data container holding simulation grid, dimensions, and field values.
+    levels : int, optional
+        Number of contour levels for the density field. Default is 20.
+    quiver_step : int, optional
+        Step size for subsampling the grid for velocity arrows.
+        Larger values = fewer arrows. Default is 10.
+    """
+    # Extract dimensions for aspect ratio
+    lx = data.dimensions[0]
+    ly = data.dimensions[1]
+    aspect_ratio = ly / lx
+
+    # --- Extract fields ---
+    # Density field on the first z-plane
+    rho = data.fields['density'][:, :, 0]
+
+    # Velocity components on the same plane
+    vx = data.fields['velocity3'][:, :, 0, 0]
+    vy = data.fields['velocity3'][:, :, 0, 1]
+
+    # Velocity magnitude for debugging or optional plotting
+    vmag = np.sqrt(vx ** 2 + vy ** 2)
+
+    # Grid coordinates 
+    X = data.xx[:, :, 0]
+    Y = data.yy[:, :, 0]
+
+    # --- Set figure size ---
+    # Width is arbitrary; height is scaled with aspect ratio
     width = 10
     height = width * aspect_ratio
     plt.figure(figsize=(width, height))
 
-    contour = plt.contourf(
-        data.xx[:, :, 0],
-        data.yy[:, :, 0],
-        data.fields['density'][:, :, 0],
+    # --- Filled contour plot for density ---
+    contour_density = plt.contourf(
+        X,
+        Y,
+        rho,
         levels=levels,
         cmap='viridis'
+    )
+
+    # ---- Arrow (quiver) plot ----
+    # Subsample grid to avoid too many arrows
+    Xq = X[::quiver_step, ::quiver_step]
+    Yq = Y[::quiver_step, ::quiver_step]
+    VXq = vx[::quiver_step, ::quiver_step]
+    VYq = vy[::quiver_step, ::quiver_step]
+
+    plt.quiver(
+        Xq, Yq, VXq, VYq,
+        color="white",   # arrows in white for contrast
+        scale=1,         # adjust for vector scaling
+        width=0.004,     # thinner arrows
+        angles="xy",
+        pivot="mid" 
     )
 
     # Set equal aspect ratio
@@ -151,7 +195,7 @@ def make_contourmap(data: DataContainer, levels: int = 20) -> None:
     
     plt.xlabel("x")
     plt.ylabel("y")
-    cbar = plt.colorbar(contour, orientation='horizontal', pad=0.1)
+    cbar = plt.colorbar(contour_density, orientation='horizontal', pad=0.1)
     cbar.set_label("Density")
 
     plt.savefig("test.svg", format='svg', bbox_inches='tight')
@@ -174,9 +218,11 @@ def main() -> None:
 
     print("Initializing density...")
     demo_data.set_field("density", r2_density(demo_data, (0.5, 0.5, 0.5), 0.01, 1.0))
+    print("Initializing velocity...")
     #TODO: Include also free fall speed componet. 
     demo_data.set_field("velocity3", keplerian_rotation(demo_data, (0.5, 0.5, 0,5), 0.01, 1.0))
 
+    print("Plotting...")
     make_contourmap(demo_data, 20)
 
     print("DONE")
